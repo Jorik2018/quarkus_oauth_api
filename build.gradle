@@ -1,0 +1,46 @@
+plugins {
+    id 'java'
+    id 'io.quarkus'
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    implementation enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}")
+    implementation 'io.quarkus:quarkus-resteasy-qute'
+    implementation 'io.quarkus:quarkus-arc'
+    implementation 'io.quarkus:quarkus-resteasy-jsonb'
+    implementation 'io.quarkus:quarkus-smallrye-jwt'
+    implementation 'io.quarkus:quarkus-smallrye-jwt-build'
+    implementation 'io.quarkus:quarkus-mailer'
+    implementation 'io.quarkus:quarkus-hibernate-orm'
+    implementation 'io.quarkus:quarkus-jdbc-mysql'
+    testImplementation 'io.quarkus:quarkus-junit5'
+    implementation 'org.jboss.resteasy:resteasy-multipart-provider'
+	implementation 'com.github.fmcejudo:quarkus-eureka-deployment:0.0.10'
+    
+    compileOnly 'org.projectlombok:lombok:1.18.20'
+    annotationProcessor 'org.projectlombok:lombok:1.18.20'
+    implementation files('E:/projects/java/spring/isobit/build/libs/isobit.jar')
+    implementation files('D:/java/libs/isobit.jar')
+}
+
+group 'org.isobit'
+version '1.0.0-SNAPSHOT'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
+compileJava {
+    options.encoding = 'UTF-8'
+    options.compilerArgs << '-parameters'
+}
+
+compileTestJava {
+    options.encoding = 'UTF-8'
+}

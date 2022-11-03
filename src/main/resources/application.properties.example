@@ -1,0 +1,16 @@
+quarkus.http.cors=true
+quarkus.http.cors.origins=*
+quarkus.http.cors.methods=GET,PUT,POST,OPTIONS,DELETE
+mp.jwt.verify.publickey.location=
+mp.jwt.verify.issuer=https://example.com/issuer
+quarkus-smallrye.jwt.sign.key-location=META-INF/resources/privateKey.pem
+smallrye.jwt.sign.key-location=META-INF/resources/privateKey.pem
+smallrye.jwt.expiration.grace=360
+quarkus.http.port=5055
+quarkus.application.name=auth
+quarkus.eureka.region=default
+quarkus.hibernate-orm.packages=org.isobit.app.jpa
+quarkus.datasource.db-kind =
+quarkus.datasource.username =
+quarkus.datasource.password =
+quarkus.datasource.jdbc.url =
