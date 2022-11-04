@@ -1,7 +1,5 @@
 package org.isobit.app;
 
-import java.security.Principal;
-
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.enterprise.context.RequestScoped;
@@ -44,7 +42,7 @@ public class TokenSecuredResource {
 	@POST()
 	@Path("")
 	@PermitAll
-	public Object login(Map m) {
+	public Object login(Map<String,Object> m) {
 		String username = (String) m.get("username");
 		String password = (String) m.get("password");
 		if (username == null || username.trim().length() == 0)
@@ -74,7 +72,7 @@ public class TokenSecuredResource {
 		System.out.println(map);
 		Integer uid = Integer.parseInt(jwt.getClaim("uid").toString());
 		// userService.initSession(uid);
-		HashMap m = new HashMap();
+		HashMap<String,Object> m = new HashMap<String,Object>();
 		m.put("changed", userService.changePassword(uid, map.get("current"), map.get("new"), map.get("confirm")));
 		return m;
 	}
@@ -82,9 +80,11 @@ public class TokenSecuredResource {
 	@GET()
 	@Path("")
 	@PermitAll
-	public String checkToken(@Context SecurityContext ctx) {
+	public Object checkToken(@Context SecurityContext ctx) {
 		Integer uid = Integer.parseInt(jwt.getClaim("uid").toString());
-		return getResponseString(ctx);
+		HashMap<String,Object> result=new HashMap<String,Object>();
+		result.put("uid",uid);
+		return result;
 	}
 
 	@GET
