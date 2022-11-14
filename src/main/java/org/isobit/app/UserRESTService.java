@@ -5,12 +5,6 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-
-import javax.annotation.security.RolesAllowed;
-
-import org.jboss.resteasy.annotations.jaxrs.PathParam;
-import org.jboss.resteasy.annotations.cache.NoCache;
-
 import java.io.*;
 
 //import io.quarkus.security.identity.SecurityIdentity;
@@ -27,10 +21,8 @@ public class UserRESTService {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Object hello() {
-        
         return new File(".").list();
     }
-
 
     @GET
     @Path("/0/0")

@@ -153,12 +153,23 @@ public class UserService {
     }
 
     public Object getTokenByCode(String code) {
-        Object[] row = (Object[]) em.createNativeQuery("SELECT client_id,user_id FROM oauth2_code WHERE code=:code")
-                .setParameter("code", code).setMaxResults(1).getSingleResult();
-        Integer uid = Integer.parseInt(row[1].toString());
-        User user = em.find(User.class, uid);
+        System.out.println("code="+code);
+        try{
+            Object[] row = (Object[]) em.createNativeQuery("SELECT client_id,user_id FROM oauth2_code WHERE code=:code")
+                    .setParameter("code", code).setMaxResults(1).getSingleResult();
+            Integer uid = Integer.parseInt(row[1].toString());
+            User user = em.find(User.class, uid);
 
-        return getJWTInfoByUser(user);
+            return getJWTInfoByUser(user);
+        }catch(Exception ex){
+            HashMap<String,Object> map=new HashMap<String,Object>();
+            if(ex instanceof javax.persistence.NoResultException){
+                map.put("msg", "No Found");
+            }else{
+                map.put("msg", ex.toString());
+            }
+            return map;
+        }
     }
 
 }
