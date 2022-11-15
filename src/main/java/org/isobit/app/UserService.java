@@ -160,7 +160,9 @@ public class UserService {
             Integer uid = Integer.parseInt(row[1].toString());
             User user = em.find(User.class, uid);
 System.out.println(user);
-            return getJWTInfoByUser(user);
+Map m=getJWTInfoByUser(user);
+System.out.println(m);
+            return m;
         }catch(Exception ex){
             
             HashMap<String,Object> map=new HashMap<String,Object>();
