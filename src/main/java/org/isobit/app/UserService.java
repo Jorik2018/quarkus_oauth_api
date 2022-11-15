@@ -159,13 +159,15 @@ public class UserService {
                     .setParameter("code", code).setMaxResults(1).getSingleResult();
             Integer uid = Integer.parseInt(row[1].toString());
             User user = em.find(User.class, uid);
-
+System.out.println(user);
             return getJWTInfoByUser(user);
         }catch(Exception ex){
+            
             HashMap<String,Object> map=new HashMap<String,Object>();
             if(ex instanceof javax.persistence.NoResultException){
                 map.put("msg", "No Found");
             }else{
+                ex.printStackTrace();
                 map.put("msg", ex.toString());
             }
             return map;
