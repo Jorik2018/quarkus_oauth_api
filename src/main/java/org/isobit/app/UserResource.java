@@ -24,7 +24,7 @@ import java.util.Map;
 @RequestScoped
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
-public class TokenSecuredResource {
+public class UserResource {
 
 	@Inject
 	UserService userService;
@@ -65,8 +65,8 @@ public class TokenSecuredResource {
 
 	@POST()
 	@Path("change-password")
-	@RolesAllowed({ "User", "Admin" })
-	// @PermitAll
+	//@RolesAllowed({ "User", "Admin" })
+	@PermitAll
 	public Object changePassword(Map<Object, String> map) {
 		/* User user = userService.getCurrentUser(); */
 		System.out.println(map);
@@ -76,6 +76,30 @@ public class TokenSecuredResource {
 		m.put("changed", userService.changePassword(uid, map.get("current"), map.get("new"), map.get("confirm")));
 		return m;
 	}
+
+
+	@POST
+	@Path("password")
+	@PermitAll
+    public Object password(Map<Object, Object> map) throws Exception {
+        int result = userService.password(map);
+        //Object destiny = sessionFacade.get(X.DESTINY);
+        //sessionFacade.put(X.DESTINY, null);
+        //m.put(destiny, destiny);
+        //String d = (destiny != null ? destiny : "admin").toString();
+        org.isobit.app.jpa.User user = (org.isobit.app.jpa.User) map.get("account");
+        map = new HashMap<Object, Object>();
+        if (user != null) {
+            map.put("message", "Se envio un mensaje de cambio de contraseña a su e-mail.");
+        	map.put("OK", true);
+        } else {
+            map.put("OK", false);
+        }
+        return map;
+    }
+
+
+
 
 	@GET()
 	@Path("")
