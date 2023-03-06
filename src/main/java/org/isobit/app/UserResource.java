@@ -64,7 +64,7 @@ public class UserResource {
 	}
 
 	@POST()
-	@Path("/can")
+	@Path("can")
 	@PermitAll
 	public Map can(String[] perms) {
 		Integer uid = Integer.parseInt(jwt.getClaim("uid").toString());
