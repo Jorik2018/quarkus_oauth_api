@@ -64,6 +64,14 @@ public class UserResource {
 	}
 
 	@POST()
+	@Path("/can")
+	@PermitAll
+	public Map can(String[] perms) {
+		Integer uid = Integer.parseInt(jwt.getClaim("uid").toString());
+		return userService.can(uid,perms);
+	}
+
+	@POST()
 	@Path("change-password")
 	//@RolesAllowed({ "User", "Admin" })
 	@PermitAll
