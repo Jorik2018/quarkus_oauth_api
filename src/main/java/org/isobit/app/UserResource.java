@@ -38,6 +38,14 @@ public class UserResource {
 	public String login() {
 		return "POST";
 	}
+	
+	@POST()
+	@Path("can")
+	@PermitAll
+	public Object can(String[] perms) {
+		Integer uid = Integer.parseInt(jwt.getClaim("uid").toString());
+		return perms;//userService.can(uid,perms);
+	}
 
 	@POST()
 	@Path("")
@@ -63,13 +71,7 @@ public class UserResource {
 		return userService.getTokenByCode(code);
 	}
 
-	@POST()
-	@Path("/can")
-	@PermitAll
-	public Map can(String[] perms) {
-		Integer uid = Integer.parseInt(jwt.getClaim("uid").toString());
-		return userService.can(uid,perms);
-	}
+
 
 	@POST()
 	@Path("change-password")
