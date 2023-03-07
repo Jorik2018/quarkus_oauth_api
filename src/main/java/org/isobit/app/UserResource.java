@@ -48,6 +48,14 @@ public class UserResource {
 	}
 
 	@POST()
+	@Path("perms")
+	@PermitAll
+	public Object perms() {
+		Integer uid = Integer.parseInt(jwt.getClaim("uid").toString());
+		return userService.perms(uid);
+	}
+
+	@POST()
 	@Path("")
 	@PermitAll
 	public Object login(Map<String,Object> m) {

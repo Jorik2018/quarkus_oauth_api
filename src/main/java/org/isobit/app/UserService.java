@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.HashSet;
@@ -315,6 +316,15 @@ public class UserService {
             mm.put(perm,persList.stream().anyMatch(a -> a.contains(","+perm+",")));
         }
         return mm;
+    }
+
+    public Object perms(Integer uid) {
+        return em.createQuery("SELECT DISTINCT CONCAT(',',p.perm,',') FROM UserRole ur INNER JOIN Permission p ON ur.PK.rid=p.role.rid WHERE ur.PK.uid=:uid",String.class)
+        .setParameter("uid", uid)
+        .getResultStream().flatMap(Pattern.compile(",")::splitAsStream)
+        .map(String::trim).distinct()
+        .collect(Collectors.toList());
+        
     }
 
 }
