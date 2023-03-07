@@ -309,7 +309,7 @@ public class UserService {
 
     public Map can(Integer uid, String[] perms) {
         
-        List<String> persList=em.createQuery("SELECT DISTINCT CONCAT(',',p.perm,',') FROM UserRole ur INNER JOIN Permission p ON ur.PK.rid=p.rid WHERE ur.PK.uid=:uid",String.class).setParameter("uid", uid).getResultList();
+        List<String> persList=em.createQuery("SELECT DISTINCT CONCAT(',',p.perm,',') FROM UserRole ur INNER JOIN Permission p ON ur.PK.rid=p.role.rid WHERE ur.PK.uid=:uid",String.class).setParameter("uid", uid).getResultList();
         HashMap mm=new HashMap();
         for(String perm:perms){
             mm.put(perm,persList.stream().anyMatch(a -> a.contains(","+perm+",")));
