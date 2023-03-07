@@ -44,7 +44,7 @@ public class UserResource {
 	@PermitAll
 	public Object can(String[] perms) {
 		Integer uid = Integer.parseInt(jwt.getClaim("uid").toString());
-		return perms;//userService.can(uid,perms);
+		return userService.can(uid,perms);
 	}
 
 	@POST()
