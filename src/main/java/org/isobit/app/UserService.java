@@ -197,8 +197,13 @@ public class UserService {
         result.put("token", token);
         result.put("user", user.getName());
         result.put("user_nicename", user.getName());
-        if (user.getDirectoryId() != null)
+        if (user.getDirectoryId() != null){
             result.put("directory", user.getDirectoryId().toString());
+            People people=em.find(People.class, user.getDirectoryId());
+            if(people!=null){
+                result.put("fullName",people.getFullName());
+            }
+        }
         List<Integer> roles = em.createQuery("SELECT ur.role.rid FROM UserRole ur WHERE ur.PK.uid=:uid", Integer.class)
                 .setParameter("uid", user.getUid())
                 .getResultList();
