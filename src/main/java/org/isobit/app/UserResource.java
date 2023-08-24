@@ -13,7 +13,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.SecurityContext;
-
+import org.isobit.app.model.User;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 
 import java.util.HashMap;
@@ -104,7 +104,7 @@ public class UserResource {
         //sessionFacade.put(X.DESTINY, null);
         //m.put(destiny, destiny);
         //String d = (destiny != null ? destiny : "admin").toString();
-        org.isobit.app.jpa.User user = (org.isobit.app.jpa.User) map.get("account");
+        org.isobit.app.model.User user = (org.isobit.app.model.User) map.get("account");
         map = new HashMap<Object, Object>();
         if (user != null) {
             map.put("message", "Se envio un mensaje de cambio de contraseña a su e-mail.");
