@@ -11,16 +11,15 @@ import java.util.stream.Collectors;
 import java.util.HashSet;
 import java.util.List;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
-import javax.persistence.PersistenceContext;
-import javax.transaction.Transactional;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.PersistenceContext;
+import jakarta.transaction.Transactional;
 
 import org.eclipse.microprofile.jwt.Claims;
-import org.isobit.app.jpa.Permission;
-import org.isobit.app.jpa.User;
-import org.isobit.directory.jpa.People;
+import org.isobit.app.model.User;
+import org.isobit.directory.model.People;
 import org.isobit.util.Encrypter;
 import org.isobit.util.SimpleException;
 import org.isobit.util.XMap;
@@ -29,7 +28,7 @@ import org.isobit.util.XUtil;
 import io.smallrye.jwt.build.Jwt;
 import io.smallrye.jwt.build.JwtClaimsBuilder;
 import org.eclipse.microprofile.jwt.JsonWebToken;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @Transactional
 @ApplicationScoped
@@ -270,7 +269,7 @@ public class UserService {
         } catch (Exception ex) {
 
             HashMap<String, Object> map = new HashMap<String, Object>();
-            if (ex instanceof javax.persistence.NoResultException) {
+            if (ex instanceof jakarta.persistence.NoResultException) {
                 map.put("msg", "No Found");
             } else {
                 ex.printStackTrace();

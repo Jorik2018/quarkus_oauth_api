@@ -20,23 +20,25 @@ dependencies {
     implementation 'io.quarkus:quarkus-jdbc-mysql'
     implementation 'org.jboss.resteasy:resteasy-multipart-provider'
 	implementation 'com.github.fmcejudo:quarkus-eureka-deployment:0.0.10'
-    
+implementation 'jakarta.validation:jakarta.validation-api:3.0.2'    
     compileOnly 'org.projectlombok:lombok:1.18.20'
     annotationProcessor 'org.projectlombok:lombok:1.18.20'
-    implementation files('D:/projects/java/spring/isobit/build/libs/isobit.jar')
+    implementation files('C:/projects/java/spring/java_isobit/build/libs/isobit.jar')
 
 
     testImplementation 'io.quarkus:quarkus-junit5'
     testImplementation 'io.rest-assured:rest-assured'
     testImplementation 'io.quarkus:quarkus-jdbc-h2'
+
+
 }
 
 group 'org.isobit'
 version '1.0.0-SNAPSHOT'
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
 
 test {
