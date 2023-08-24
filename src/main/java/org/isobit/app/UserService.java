@@ -248,8 +248,8 @@ public class UserService {
 
     public String passResetUrl(User account) {
         long passResetTimestamp = X.getServerDate().getTime() / 1000;
-        return X.url("user/reset/" + account.getUid() + "/" + passResetTimestamp + "/"
-                + this.passRehash(account.getPass(), passResetTimestamp, account.getLogin()));
+        return "";/*X.url("user/reset/" + account.getUid() + "/" + passResetTimestamp + "/"
+                + this.passRehash(account.getPass(), passResetTimestamp, account.getLogin()));*/
     }
 
     private String passRehash(String pass, long timestamp, long login) {
