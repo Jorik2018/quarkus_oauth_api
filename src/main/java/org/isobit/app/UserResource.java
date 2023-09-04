@@ -26,7 +26,7 @@ import java.util.Map;
 public class UserResource {
 
 	@Inject
-	UserService userService;
+	UserService2 userService;
 
 	@Inject
 	JsonWebToken jwt;

@@ -32,7 +32,7 @@ import jakarta.inject.Inject;
 
 @Transactional
 @ApplicationScoped
-public class UserService {
+public class UserService2 {
 
     @Inject
     JsonWebToken jwt;

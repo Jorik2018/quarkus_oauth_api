@@ -19,7 +19,7 @@ dependencies {
     implementation 'io.quarkus:quarkus-hibernate-orm'
     implementation 'io.quarkus:quarkus-jdbc-mysql'
     implementation 'org.jboss.resteasy:resteasy-multipart-provider'
-	implementation 'com.github.fmcejudo:quarkus-eureka-deployment:0.0.10'
+	//implementation 'com.github.fmcejudo:quarkus-eureka-deployment:0.0.10'
 implementation 'jakarta.validation:jakarta.validation-api:3.0.2'    
     compileOnly 'org.projectlombok:lombok:1.18.20'
       compileOnly 'javax.ws.rs:javax.ws.rs-api:2.1-m09'
