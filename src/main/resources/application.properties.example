@@ -9,10 +9,13 @@ smallrye.jwt.expiration.grace=360
 quarkus.http.port=5055
 quarkus.application.name=auth
 quarkus.eureka.region=default
-quarkus.hibernate-orm.packages=org.isobit.app.jpa,org.isobit.directory.jpa
+
 quarkus.datasource.db-kind =
 quarkus.datasource.username =
 quarkus.datasource.password =
 quarkus.datasource.jdbc.url =
 quarkus-smallrye.jwt.sign.key-location=
 smallrye.jwt.sign.key-location=
+
+quarkus.hibernate-orm.packages=org.isobit.app.model,org.isobit.directory.model
+quarkus.hibernate-orm.datasource=<default> 

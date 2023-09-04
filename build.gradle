@@ -8,21 +8,26 @@ repositories {
     mavenLocal()
 }
 
+
 dependencies {
     implementation enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}")
-    implementation 'io.quarkus:quarkus-resteasy-qute'
+    implementation 'io.quarkus:quarkus-resteasy-reactive-jsonb'
+    implementation 'io.quarkus:quarkus-resteasy-reactive'
+    implementation 'io.quarkus:quarkus-hibernate-orm-panache'
+    implementation 'io.quarkus:quarkus-hibernate-orm'
     implementation 'io.quarkus:quarkus-arc'
-    implementation 'io.quarkus:quarkus-resteasy-jsonb'
+    implementation 'io.quarkus:quarkus-smallrye-jwt'
     implementation 'io.quarkus:quarkus-smallrye-jwt'
     implementation 'io.quarkus:quarkus-smallrye-jwt-build'
     implementation 'io.quarkus:quarkus-mailer'
+    implementation 'io.quarkus:quarkus-hibernate-orm-panache'
     implementation 'io.quarkus:quarkus-hibernate-orm'
     implementation 'io.quarkus:quarkus-jdbc-mysql'
     implementation 'org.jboss.resteasy:resteasy-multipart-provider'
 	//implementation 'com.github.fmcejudo:quarkus-eureka-deployment:0.0.10'
-implementation 'jakarta.validation:jakarta.validation-api:3.0.2'    
+    implementation 'jakarta.validation:jakarta.validation-api:3.0.2'    
     compileOnly 'org.projectlombok:lombok:1.18.20'
-      compileOnly 'javax.ws.rs:javax.ws.rs-api:2.1-m09'
+    compileOnly 'javax.ws.rs:javax.ws.rs-api:2.1-m09'
     compileOnly 'javax.servlet:servlet-api:3.0-alpha-1'
     annotationProcessor 'org.projectlombok:lombok:1.18.20'
     implementation files('C:/projects/java/spring/java_isobit/build/libs/isobit.jar')
