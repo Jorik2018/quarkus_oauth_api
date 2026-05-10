@@ -4,6 +4,7 @@ import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.InternalServerErrorException;
@@ -55,19 +56,25 @@ public class UserResource {
 		return userService.perms(uid);
 	}
 
-	@POST()
+	@POST
 	@Path("")
 	@PermitAll
-	public Object login(Map<String,Object> m) {
+	public Object login(Map<String, Object> m) {
+
 		String username = (String) m.get("username");
 		String password = (String) m.get("password");
-		if (username == null || username.trim().length() == 0)
-			throw new RuntimeException("Username is Empty!");
-		if (password == null || password.trim().length() == 0)
-			throw new RuntimeException("Password is Empty!");
+
+		if (username == null || username.trim().isEmpty())
+			throw new BadRequestException("Username is Empty!");
+
+		if (password == null || password.trim().isEmpty())
+			throw new BadRequestException("Password is Empty!");
+
 		User user = userService.login(username, password);
+
 		if (user == null)
-			throw new RuntimeException("Usuario no valido!");
+			throw new BadRequestException("Usuario no válido!");
+
 		return userService.getJWTInfoByUser(user);
 	}
 
