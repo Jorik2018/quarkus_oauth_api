@@ -15,9 +15,10 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.SecurityContext;
 import org.isobit.app.model.User;
 import org.eclipse.microprofile.jwt.JsonWebToken;
-
 import java.util.HashMap;
 import java.util.Map;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.HeaderParam;
 
 @Path("")
 @RequestScoped
@@ -77,6 +78,26 @@ public class UserResource {
 	public Object getTokenByCode(String code) {
 		return userService.getTokenByCode(code);
 	}
+
+    @POST
+    @Path("/refresh")
+    public Response refresh(@HeaderParam("Authorization") String authorization) {
+
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+            return Response.status(401)
+                    .entity(Map.of("error", "Missing token"))
+                    .build();
+        }
+
+        String oldToken = authorization.substring("Bearer ".length());
+
+        String newToken = userService.refreshToken(oldToken);
+
+        return Response.ok(Map.of(
+                "token", newToken,
+                "type", "Bearer"
+        )).build();
+    }
 
 
 

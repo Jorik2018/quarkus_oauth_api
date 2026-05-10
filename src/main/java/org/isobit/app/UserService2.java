@@ -6,7 +6,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.HashSet;
 import java.util.List;
@@ -24,11 +23,13 @@ import org.isobit.util.Encrypter;
 import org.isobit.util.SimpleException;
 import org.isobit.util.XMap;
 import org.isobit.util.XUtil;
+import org.isobit.app.SessionService;
 
 import io.smallrye.jwt.build.Jwt;
 import io.smallrye.jwt.build.JwtClaimsBuilder;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import jakarta.inject.Inject;
+import java.util.UUID;
 
 @Transactional
 @ApplicationScoped
@@ -36,6 +37,9 @@ public class UserService2 {
 
     @Inject
     JsonWebToken jwt;
+
+    @Inject
+    SessionService sessionService;
 	
 	public User getCurrentUser() {
 		User user=new User();
@@ -139,49 +143,89 @@ public class UserService2 {
         User user = null;
         try {
             name = name.trim().toLowerCase();
-            user = (User) em.createQuery("SELECT u FROM User u WHERE (LOWER(u.name)=:name OR LOWER(u.mail)=:name)")
-                    .setParameter("name", name).getSingleResult();
+
+            user = (User) em.createQuery(
+                    "SELECT u FROM User u WHERE (LOWER(u.name)=:name OR LOWER(u.mail)=:name)")
+                    .setParameter("name", name)
+                    .getSingleResult();
+
             if (user != null) {
+                long now = System.currentTimeMillis() / 1000;
+
                 if (user.getStatus() == 0) {
                     throw new RuntimeException("User is disabled");
                 }
+
+                // -----------------------------------
+                // RESET SI NO INTENTA DESDE HACE 5 MIN
+                // (basado en login = último intento)
+                // -----------------------------------
+                if (user.getLogin() != 0 && (now - user.getLogin()) > 5 * 60) {
+                    user.setThreshold((short) 0);
+                }
+
+                // -----------------------------------
+                // BLOQUEO POR INTENTOS FALLIDOS
+                // -----------------------------------
+                if (user.getThreshold() >= 3) {
+                    throw new RuntimeException("Too many failed attempts. Try later.");
+                }
+
+                // -----------------------------------
+                // COOLDOWN (usa login, NO access)
+                // -----------------------------------
+                if (user.getLogin() != 0) {
+                    long diff = now - user.getLogin();
+
+                    if (diff < 3) {
+                        user.setLogin(now); // reinicia cooldown
+                        em.merge(user);
+                        throw new RuntimeException("Wait 3 seconds before retry");
+                    }
+                }
+
+                // -----------------------------------
+                // PASSWORD CHECK
+                // -----------------------------------
                 MessageDigest md = MessageDigest.getInstance("MD5");
                 md.reset();
                 md.update(pass.getBytes());
-                if (!user.getPass().equals(toHexadecimal(md.digest())))
+
+                String hashed = toHexadecimal(md.digest());
+                boolean ok = user.getPass().equals(hashed);
+
+                // SIEMPRE registrar intento
+                user.setLogin(now);
+
+                if (!ok) {
+                    user.setThreshold((short) (user.getThreshold() + 1));
+                    em.merge(user);
                     return null;
+                }
+
+                // -----------------------------------
+                // LOGIN EXITOSO
+                // -----------------------------------
+                user.setThreshold((short) 0);
+                user.setAccess((int) now); // ✔ último login exitoso
+                em.merge(user);
             }
-        } catch (NoResultException noResultException) {
-            // X.log("Failed attemp for " + name + " using " + pass + "=" + new
-            // Encrypter().encode(Encrypter.MD5, pass));
+
+        } catch (NoResultException e) {
+            return null;
         } catch (Exception e) {
             throw new RuntimeException(e);
-        }
-        // X.log("userFacade.user=" + user);
-        /*
-         * for (String mn : getModuleNameList()) {
-         * if (user != null) {
-         * break;
-         * }
-         * try {
-         * user = getModule(UserModule.class, mn).login(name, pass, m);
-         * X.log("Iniciando session usando " + mn + " resulta user=" + user);
-         * } catch (RuntimeException e) {
-         * X.log(e);
-         * }
-         * }
-         */
-        if (user != null) {
-            // this.authenticateFinalize(user);
         }
         return user;
     }
 
     public Map getJWTInfoByUser(User user) {
+        String jti = UUID.randomUUID().toString();
         JwtClaimsBuilder jwtClaimsBuilder = Jwt.issuer("https://example.com/issuer")
                 .upn("jdoe@quarkus.io")
                 .groups(new HashSet<>(Arrays.asList("User", "Admin")))
                 .expiresIn(60 * 60)
+                .claim("jti", jti)
                 .claim("uid", user.getUid());
         if (user.getDirectoryId() != null){
             People people=em.find(People.class, user.getDirectoryId());
@@ -212,7 +256,29 @@ public class UserService2 {
                 .getResultList().stream()
                 .flatMap(permission -> Arrays.stream(permission.split(",")))
                 .collect(Collectors.toList()));
+        sessionService.put(jti,"status", "active", 3600);
         return result;
+    }
+
+    public String refreshToken(String oldToken) {
+
+    // ✔ Usar JsonWebToken o JWTParser de SmallRye (no manual parse)
+        String jti = jwt.getClaim("jti");
+        Integer uid = XUtil.intValue(jwt.getClaim("uid"));
+
+        // ✔ validar sesión activa
+        sessionService.refresh(jti, 3600);
+
+        // ✔ regenerar JWT con MISMO jti
+        JwtClaimsBuilder builder = Jwt.issuer("https://example.com/issuer")
+                .upn(jwt.getSubject())
+                .claim("jti", jti)
+                .claim("uid", uid)
+                .expiresIn(3600);
+
+        String newToken = builder.sign();
+
+        return newToken;
     }
 
     //@Override
