@@ -20,5 +20,5 @@ smallrye.jwt.sign.key-location=
 quarkus.hibernate-orm.packages=org.isobit.app.model,org.isobit.directory.model
 quarkus.hibernate-orm.datasource=<default> 
 
-quarkus.redis.hosts=redis://default:VGzseUUNTiwcpycer1cQnHyR8YICn3Xv@redis-16106.crce219.us-east-1-4.ec2.cloud.redislabs.com:16106
+quarkus.redis.hosts=
 session.redis.enabled=true

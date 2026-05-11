@@ -1,4 +1,4 @@
-POST http://38.250.177.7:7371/login
+POST http://38.250.177.7:5055
 Content-Type: application/json
 
 {
@@ -10,6 +10,6 @@ POST https://web.regionancash.gob.pe/api/login
 Content-Type: application/json
 
 {
-  "username": "admin",
-  "password": "admin"
+  "username": "XDmer14_/o/",
+  "password": "admin->77/.him-t.A1_ferr&"
 }

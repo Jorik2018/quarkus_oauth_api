@@ -1,4 +1,4 @@
-package org.isobit.app;
+package org.isobit.app.controller;
 
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
@@ -14,6 +14,8 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.SecurityContext;
+
+import org.isobit.app.UserService2;
 import org.isobit.app.model.User;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import java.util.HashMap;
@@ -25,7 +27,7 @@ import jakarta.ws.rs.HeaderParam;
 @RequestScoped
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
-public class UserResource {
+public class UserController {
 
 	@Inject
 	UserService2 userService;
