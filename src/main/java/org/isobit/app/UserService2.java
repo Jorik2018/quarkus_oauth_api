@@ -40,6 +40,10 @@ public class UserService2 {
 
     private String ISSUER = "https://example.com/issuer";
 
+    private long REFRESH_TOKEN_SECONDS = 60 * 60 * 24 * 7; //week
+
+    private long ACCESS_TOKEN_SECONDS = 3600;
+
     @Inject
     SessionService sessionService;
 
@@ -246,7 +250,7 @@ public class UserService2 {
         // =========================
         String refreshToken = Jwt.issuer(ISSUER)
                 .upn(user.getName())
-                .expiresIn(60 * 60 * 24 * 7) // 7 días
+                .expiresIn(REFRESH_TOKEN_SECONDS) // 7 días
                 .claim("jti", refreshJti)
                 .claim("uid", user.getUid())
                 .claim("type", "refresh")
@@ -272,8 +276,8 @@ public class UserService2 {
                 .getResultList().stream()
                 .flatMap(permission -> Arrays.stream(permission.split(",")))
                 .collect(Collectors.toList()));
-        sessionService.put(accessJti, "status", "active", 3600);
-        sessionService.put(refreshJti,"refresh", "active", 60 * 60 * 24 * 7);
+        sessionService.put(accessJti, "status", "active", ACCESS_TOKEN_SECONDS);
+        sessionService.put(refreshJti,"refresh", "active", REFRESH_TOKEN_SECONDS);
         return result;
     }
 
@@ -291,7 +295,7 @@ public class UserService2 {
                 .upn(jwt.getSubject())
                 .claim("jti", jti)
                 .claim("uid", uid)
-                .expiresIn(3600);
+                .expiresIn(ACCESS_TOKEN_SECONDS);
 
         String newToken = builder.sign();
 
