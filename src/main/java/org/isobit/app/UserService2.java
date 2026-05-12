@@ -38,16 +38,18 @@ public class UserService2 {
     @Inject
     JsonWebToken jwt;
 
+    private String ISSUER = "https://example.com/issuer";
+
     @Inject
     SessionService sessionService;
-	
-	public User getCurrentUser() {
-		User user=new User();
+
+    public User getCurrentUser() {
+        User user = new User();
         user.setUid(XUtil.intValue(jwt.getClaim("uid")));
-		if(jwt.containsClaim("directory"))
-			user.setDirectoryId(XUtil.intValue(jwt.getClaim("directory")));
-		return user;
-	}
+        if (jwt.containsClaim("directory"))
+            user.setDirectoryId(XUtil.intValue(jwt.getClaim("directory")));
+        return user;
+    }
 
     @PersistenceContext
     EntityManager em;
@@ -219,32 +221,46 @@ public class UserService2 {
         return user;
     }
 
-    public Map getJWTInfoByUser(User user) {
-        String jti = UUID.randomUUID().toString();
-        JwtClaimsBuilder jwtClaimsBuilder = Jwt.issuer("https://example.com/issuer")
+    public Map<String, ?> getJWTInfoByUser(User user) {
+        String accessJti = UUID.randomUUID().toString();
+        String refreshJti = UUID.randomUUID().toString();
+        JwtClaimsBuilder jwtClaimsBuilder = Jwt.issuer(ISSUER)
                 .upn("jdoe@quarkus.io")
                 .groups(new HashSet<>(Arrays.asList("User", "Admin")))
-                .expiresIn(60 * 60)
-                .claim("jti", jti)
+                .expiresIn(60 * 10) // 11min
+                .claim("jti", refreshJti)
                 .claim("uid", user.getUid());
-        if (user.getDirectoryId() != null){
-            People people=em.find(People.class, user.getDirectoryId());
-            jwtClaimsBuilder = jwtClaimsBuilder.claim("fullName",people.getFullName());
-            jwtClaimsBuilder = jwtClaimsBuilder.claim("directory", user.getDirectoryId());
+
+        if (user.getDirectoryId() != null) {
+            People people = em.find(People.class, user.getDirectoryId());
+            jwtClaimsBuilder = jwtClaimsBuilder
+                    .claim("fullName", people.getFullName())
+                    .claim("directory", user.getDirectoryId());
         }
+
         String token = jwtClaimsBuilder.claim("user", user.getName())
                 .claim(Claims.birthdate.name(), "2001-07-13")
                 .sign();
-
+        // =========================
+        // REFRESH TOKEN (largo)
+        // =========================
+        String refreshToken = Jwt.issuer(ISSUER)
+                .upn(user.getName())
+                .expiresIn(60 * 60 * 24 * 7) // 7 días
+                .claim("jti", refreshJti)
+                .claim("uid", user.getUid())
+                .claim("type", "refresh")
+                .sign();
         HashMap<String, Object> result = new HashMap<String, Object>();
         result.put("token", token);
+        result.put("refreshToken", refreshToken);
         result.put("user", user.getName());
         result.put("user_nicename", user.getName());
-        if (user.getDirectoryId() != null){
+        if (user.getDirectoryId() != null) {
             result.put("directory", user.getDirectoryId().toString());
-            People people=em.find(People.class, user.getDirectoryId());
-            if(people!=null){
-                result.put("fullName",people.getFullName());
+            People people = em.find(People.class, user.getDirectoryId());
+            if (people != null) {
+                result.put("fullName", people.getFullName());
             }
         }
         List<Integer> roles = em.createQuery("SELECT ur.role.rid FROM UserRole ur WHERE ur.PK.uid=:uid", Integer.class)
@@ -256,13 +272,14 @@ public class UserService2 {
                 .getResultList().stream()
                 .flatMap(permission -> Arrays.stream(permission.split(",")))
                 .collect(Collectors.toList()));
-        sessionService.put(jti,"status", "active", 3600);
+        sessionService.put(accessJti, "status", "active", 3600);
+        sessionService.put(refreshJti,"refresh", "active", 60 * 60 * 24 * 7);
         return result;
     }
 
     public String refreshToken(String oldToken) {
 
-    // ✔ Usar JsonWebToken o JWTParser de SmallRye (no manual parse)
+        // ✔ Usar JsonWebToken o JWTParser de SmallRye (no manual parse)
         String jti = jwt.getClaim("jti");
         Integer uid = XUtil.intValue(jwt.getClaim("uid"));
 
@@ -270,7 +287,7 @@ public class UserService2 {
         sessionService.refresh(jti, 3600);
 
         // ✔ regenerar JWT con MISMO jti
-        JwtClaimsBuilder builder = Jwt.issuer("https://example.com/issuer")
+        JwtClaimsBuilder builder = Jwt.issuer(ISSUER)
                 .upn(jwt.getSubject())
                 .claim("jti", jti)
                 .claim("uid", uid)
@@ -281,41 +298,49 @@ public class UserService2 {
         return newToken;
     }
 
-    //@Override
+    // @Override
     public int password(Map m) throws Exception {
         String name = (String) m.get("name");
         User user = null;
         try {
-            user = (User) em.createQuery("SELECT u FROM User u WHERE (LOWER(u.name)=:name OR LOWER(u.mail)=:name)", User.class).setParameter("name", name.toLowerCase()).getSingleResult();
+            user = (User) em
+                    .createQuery("SELECT u FROM User u WHERE (LOWER(u.name)=:name OR LOWER(u.mail)=:name)", User.class)
+                    .setParameter("name", name.toLowerCase()).getSingleResult();
         } catch (NoResultException n) {
-            //Si no se encuentra registro se intenta otros componentes
-            /*for (String mn : getModuleNameList()) {
-                if (user != null) {
-                    break;
-                }
-                try {
-                    user = this.getModule(UserFacadeLocal.UserModule.class, mn).password(m);
-                } catch (SimpleException e) {
-                    //throw e;
-                } catch (RuntimeException e) {
-                    X.log(e.getMessage());
-                }
-            }*/
+            // Si no se encuentra registro se intenta otros componentes
+            /*
+             * for (String mn : getModuleNameList()) {
+             * if (user != null) {
+             * break;
+             * }
+             * try {
+             * user = this.getModule(UserFacadeLocal.UserModule.class, mn).password(m);
+             * } catch (SimpleException e) {
+             * //throw e;
+             * } catch (RuntimeException e) {
+             * X.log(e.getMessage());
+             * }
+             * }
+             */
         }
         if (user != null && user.getStatus() > 0) {
             if (!this.mailNotify(m, S.PASSWORD_RESET.toString(), user, "es")) {
                 throw new SimpleException("Ha sucedido un error al enviar informacion por correo.");
             }
         } else {
-            throw new SimpleException("El codigo de usuario o correo no se encuentra registrado o esta inactivo, comuniquese con el administrador.");
+            throw new SimpleException(
+                    "El codigo de usuario o correo no se encuentra registrado o esta inactivo, comuniquese con el administrador.");
         }
         return 0;
     }
 
     public String passResetUrl(User account) {
         long passResetTimestamp = X.getServerDate().getTime() / 1000;
-        return "";/*X.url("user/reset/" + account.getUid() + "/" + passResetTimestamp + "/"
-                + this.passRehash(account.getPass(), passResetTimestamp, account.getLogin()));*/
+        return "";/*
+                   * X.url("user/reset/" + account.getUid() + "/" + passResetTimestamp + "/"
+                   * + this.passRehash(account.getPass(), passResetTimestamp,
+                   * account.getLogin()));
+                   */
     }
 
     private String passRehash(String pass, long timestamp, long login) {
@@ -330,7 +355,7 @@ public class UserService2 {
             User user = em.find(User.class, uid);
             em.createNativeQuery("DELETE FROM oauth2_code WHERE code=:code")
                     .setParameter("code", code).executeUpdate();
-            
+
             return getJWTInfoByUser(user);
         } catch (Exception ex) {
 
@@ -347,12 +372,16 @@ public class UserService2 {
 
     private boolean mailNotify(Map m, String op, User account, String language) {
         boolean default_notify = !op.equals(S.STATUS_DELETED.toString()) && !op.equals(S.STATUS_BLOCKED.toString());
-        boolean notify =true;// XUtil.booleanValue(systemFacade.getV(USER_MAIL_ + op + "_notify", default_notify));
+        boolean notify = true;// XUtil.booleanValue(systemFacade.getV(USER_MAIL_ + op + "_notify",
+                              // default_notify));
         if (notify) {
             XMap params = new XMap("account", account);
             if (XUtil.intValue(account.getDirectoryId()) != 0) {
                 try {
-                    m.put(T.NAME, em.createQuery("SELECT p.names FROM People p WHERE p.id=:peopleId").setParameter("peopleId", (Object) account.getDirectoryId()).getSingleResult().toString().split(" ")[0]);
+                    m.put(T.NAME,
+                            em.createQuery("SELECT p.names FROM People p WHERE p.id=:peopleId")
+                                    .setParameter("peopleId", (Object) account.getDirectoryId()).getSingleResult()
+                                    .toString().split(" ")[0]);
                 } catch (NoResultException noResultException) {
                     // empty catch block
                 }
@@ -364,37 +393,43 @@ public class UserService2 {
 
             }
             m.put("account", account);
-            /*contactFacade.mail(m, this, op, account.getMail(), language, params);
-            if (op.equals(S.REGISTER_PENDING_APPROVAL.toString())) {
-                contactFacade.mail(
-                        m, this,
-                        S.REGISTER_PENDING_APPROVAL_ADMIN.toString(),
-                        systemFacade.getV("site_mail", "").toString(),
-                        language,
-                        params
-                );
-            }*/
+            /*
+             * contactFacade.mail(m, this, op, account.getMail(), language, params);
+             * if (op.equals(S.REGISTER_PENDING_APPROVAL.toString())) {
+             * contactFacade.mail(
+             * m, this,
+             * S.REGISTER_PENDING_APPROVAL_ADMIN.toString(),
+             * systemFacade.getV("site_mail", "").toString(),
+             * language,
+             * params
+             * );
+             * }
+             */
         }
         return true;
     }
 
     public Map can(Integer uid, String[] perms) {
-        
-        List<String> persList=em.createQuery("SELECT DISTINCT CONCAT(',',p.perm,',') FROM UserRole ur INNER JOIN Permission p ON ur.PK.rid=p.role.rid WHERE ur.PK.uid=:uid",String.class).setParameter("uid", uid).getResultList();
-        HashMap mm=new HashMap();
-        for(String perm:perms){
-            mm.put(perm,persList.stream().anyMatch(a -> a.contains(","+perm+",")));
+
+        List<String> persList = em.createQuery(
+                "SELECT DISTINCT CONCAT(',',p.perm,',') FROM UserRole ur INNER JOIN Permission p ON ur.PK.rid=p.role.rid WHERE ur.PK.uid=:uid",
+                String.class).setParameter("uid", uid).getResultList();
+        HashMap mm = new HashMap();
+        for (String perm : perms) {
+            mm.put(perm, persList.stream().anyMatch(a -> a.contains("," + perm + ",")));
         }
         return mm;
     }
 
     public Object perms(Integer uid) {
-        return em.createQuery("SELECT DISTINCT CONCAT(',',p.perm,',') FROM UserRole ur INNER JOIN Permission p ON ur.PK.rid=p.role.rid WHERE ur.PK.uid=:uid",String.class)
-        .setParameter("uid", uid)
-        .getResultStream().flatMap(Pattern.compile(",")::splitAsStream)
-        .map(String::trim).distinct()
-        .collect(Collectors.toList());
-        
+        return em.createQuery(
+                "SELECT DISTINCT CONCAT(',',p.perm,',') FROM UserRole ur INNER JOIN Permission p ON ur.PK.rid=p.role.rid WHERE ur.PK.uid=:uid",
+                String.class)
+                .setParameter("uid", uid)
+                .getResultStream().flatMap(Pattern.compile(",")::splitAsStream)
+                .map(String::trim).distinct()
+                .collect(Collectors.toList());
+
     }
 
 }

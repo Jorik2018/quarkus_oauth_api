@@ -22,6 +22,8 @@ import java.util.HashMap;
 import java.util.Map;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.HeaderParam;
+import jakarta.ws.rs.CookieParam;
+import jakarta.ws.rs.core.NewCookie;
 
 @Path("")
 @RequestScoped
@@ -41,13 +43,13 @@ public class UserController {
 	public String login() {
 		return "POST";
 	}
-	
+
 	@POST()
 	@Path("can")
 	@PermitAll
 	public Object can(String[] perms) {
 		Integer uid = Integer.parseInt(jwt.getClaim("uid").toString());
-		return userService.can(uid,perms);
+		return userService.can(uid, perms);
 	}
 
 	@POST()
@@ -77,7 +79,23 @@ public class UserController {
 		if (user == null)
 			throw new BadRequestException("Usuario no válido!");
 
-		return userService.getJWTInfoByUser(user);
+		Map<String, ?> result = userService.getJWTInfoByUser(user);
+
+		// 🔹 extraer refresh token del map
+		String refreshToken = (String) result.get("refreshToken");
+
+		// 🔹 removerlo del body (opcional pero recomendado)
+		result.remove("refreshToken");
+		// NewCookie cannot be resolved to a type
+		return Response.ok(result)
+				.cookie(new NewCookie.Builder("refreshToken")
+						.value(refreshToken)
+						.path("/")
+						.maxAge(60 * 60 * 24 * 7)
+						.httpOnly(true)
+						.secure(true)
+						.build())
+				.build();
 	}
 
 	@POST()
@@ -88,73 +106,65 @@ public class UserController {
 		return userService.getTokenByCode(code);
 	}
 
-    @POST
-    @Path("/refresh")
-    public Response refresh(@HeaderParam("Authorization") String authorization) {
+	@POST
+	@Path("/refresh")
+	// CookieParam cannot be resolved to a type
+	public Response refresh(@CookieParam("refreshToken") String refreshToken) {
 
-        if (authorization == null || !authorization.startsWith("Bearer ")) {
-            return Response.status(401)
-                    .entity(Map.of("error", "Missing token"))
-                    .build();
-        }
+		if (refreshToken == null) {
+			return Response.status(401)
+					.entity(Map.of("error", "Missing refresh cookie"))
+					.build();
+		}
 
-        String oldToken = authorization.substring("Bearer ".length());
+		String newAccessToken = userService.refreshToken(refreshToken);
 
-        String newToken = userService.refreshToken(oldToken);
-
-        return Response.ok(Map.of(
-                "token", newToken,
-                "type", "Bearer"
-        )).build();
-    }
-
-
+		return Response.ok(Map.of(
+				"token", newAccessToken,
+				"type", "Bearer")).build();
+	}
 
 	@POST()
 	@Path("change-password")
-	//@RolesAllowed({ "User", "Admin" })
+	// @RolesAllowed({ "User", "Admin" })
 	@PermitAll
 	public Object changePassword(Map<Object, String> map) {
 		/* User user = userService.getCurrentUser(); */
 		System.out.println(map);
 		Integer uid = Integer.parseInt(jwt.getClaim("uid").toString());
 		// userService.initSession(uid);
-		HashMap<String,Object> m = new HashMap<String,Object>();
+		HashMap<String, Object> m = new HashMap<String, Object>();
 		m.put("changed", userService.changePassword(uid, map.get("current"), map.get("new"), map.get("confirm")));
 		return m;
 	}
 
-
 	@POST
 	@Path("password")
 	@PermitAll
-    public Object password(Map<Object, Object> map) throws Exception {
-        int result = userService.password(map);
-        //Object destiny = sessionFacade.get(X.DESTINY);
-        //sessionFacade.put(X.DESTINY, null);
-        //m.put(destiny, destiny);
-        //String d = (destiny != null ? destiny : "admin").toString();
-        org.isobit.app.model.User user = (org.isobit.app.model.User) map.get("account");
-        map = new HashMap<Object, Object>();
-        if (user != null) {
-            map.put("message", "Se envio un mensaje de cambio de contraseña a su e-mail.");
-        	map.put("OK", true);
-        } else {
-            map.put("OK", false);
-        }
-        return map;
-    }
-
-
-
+	public Object password(Map<Object, Object> map) throws Exception {
+		int result = userService.password(map);
+		// Object destiny = sessionFacade.get(X.DESTINY);
+		// sessionFacade.put(X.DESTINY, null);
+		// m.put(destiny, destiny);
+		// String d = (destiny != null ? destiny : "admin").toString();
+		org.isobit.app.model.User user = (org.isobit.app.model.User) map.get("account");
+		map = new HashMap<Object, Object>();
+		if (user != null) {
+			map.put("message", "Se envio un mensaje de cambio de contraseña a su e-mail.");
+			map.put("OK", true);
+		} else {
+			map.put("OK", false);
+		}
+		return map;
+	}
 
 	@GET()
 	@Path("")
 	@PermitAll
 	public Object checkToken(@Context SecurityContext ctx) {
 		Integer uid = Integer.parseInt(jwt.getClaim("uid").toString());
-		HashMap<String,Object> result=new HashMap<String,Object>();
-		result.put("uid",uid);
+		HashMap<String, Object> result = new HashMap<String, Object>();
+		result.put("uid", uid);
 		return result;
 	}
 
