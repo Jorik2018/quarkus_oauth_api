@@ -97,6 +97,7 @@ public class UserController {
 						.build())
 				.build();
 	}
+	
 
 	@POST()
 	@Path("/token")
