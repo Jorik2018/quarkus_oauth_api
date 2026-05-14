@@ -305,9 +305,8 @@ JWTParser parser;
 
             // ✔ generar NUEVO access token (nuevo jti recomendado)
             String newJti = UUID.randomUUID().toString();
-
             String newToken = Jwt.issuer(ISSUER)
-                    .upn(jwt.getSubject())
+                    .upn("jdoe@quarkus.io")
                     .claim("jti", newJti)
                     .claim("uid", uid)
                     .groups(jwt.getGroups())
