@@ -94,7 +94,7 @@ public class UserController {
 						.path("/")
 						.maxAge(60 * 60 * 24 * 7)
 						.httpOnly(true)
-						.sameSite(SameSite.NONE) // 🔥 CLAVE
+						.sameSite(SameSite.LAX) // 🔥 CLAVE
 						.secure(false)//for prod must be true
 						.build())
 				.build();
