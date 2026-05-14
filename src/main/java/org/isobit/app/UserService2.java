@@ -24,7 +24,7 @@ import org.isobit.util.SimpleException;
 import org.isobit.util.XMap;
 import org.isobit.util.XUtil;
 import org.isobit.app.SessionService;
-
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import io.smallrye.jwt.auth.principal.JWTParser;
 import io.smallrye.jwt.build.Jwt;
 import io.smallrye.jwt.build.JwtClaimsBuilder;
@@ -37,12 +37,13 @@ import java.util.UUID;
 public class UserService2 {
 
     @Inject
-    JsonWebToken jwt;
+    private JsonWebToken jwt;
 
     @Inject
-JWTParser parser;
+    private JWTParser parser;
 
-    private String ISSUER = "https://example.com/issuer";
+    @ConfigProperty(name = "mp.jwt.verify.issuer")
+    private String ISSUER;
 
     private long REFRESH_TOKEN_SECONDS = 60 * 60 * 24 * 7; // week
 
