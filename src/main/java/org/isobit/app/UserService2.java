@@ -25,6 +25,7 @@ import org.isobit.util.XMap;
 import org.isobit.util.XUtil;
 import org.isobit.app.SessionService;
 
+import io.smallrye.jwt.auth.principal.JWTParser;
 import io.smallrye.jwt.build.Jwt;
 import io.smallrye.jwt.build.JwtClaimsBuilder;
 import org.eclipse.microprofile.jwt.JsonWebToken;
@@ -38,9 +39,12 @@ public class UserService2 {
     @Inject
     JsonWebToken jwt;
 
+    @Inject
+JWTParser parser;
+
     private String ISSUER = "https://example.com/issuer";
 
-    private long REFRESH_TOKEN_SECONDS = 60 * 60 * 24 * 7; //week
+    private long REFRESH_TOKEN_SECONDS = 60 * 60 * 24 * 7; // week
 
     private long ACCESS_TOKEN_SECONDS = 3600;
 
@@ -232,7 +236,7 @@ public class UserService2 {
                 .upn("jdoe@quarkus.io")
                 .groups(new HashSet<>(Arrays.asList("User", "Admin")))
                 .expiresIn(60 * 10) // 11min
-                .claim("jti", refreshJti)
+                .claim("jti", accessJti)
                 .claim("uid", user.getUid());
 
         if (user.getDirectoryId() != null) {
@@ -277,29 +281,43 @@ public class UserService2 {
                 .flatMap(permission -> Arrays.stream(permission.split(",")))
                 .collect(Collectors.toList()));
         sessionService.put(accessJti, "status", "active", ACCESS_TOKEN_SECONDS);
-        sessionService.put(refreshJti,"refresh", "active", REFRESH_TOKEN_SECONDS);
+        sessionService.put(refreshJti, "refresh", "active", REFRESH_TOKEN_SECONDS);
         return result;
     }
 
-    public String refreshToken(String oldToken) {
+    public String refreshToken(String refreshToken) {
 
-        // ✔ Usar JsonWebToken o JWTParser de SmallRye (no manual parse)
-        String jti = jwt.getClaim("jti");
-        Integer uid = XUtil.intValue(jwt.getClaim("uid"));
+        try {
+            // 🔥 parsear el refresh token correctamente
+            JsonWebToken jwt = parser.parse(refreshToken);
 
-        // ✔ validar sesión activa
-        sessionService.refresh(jti, 3600);
+            String jti = jwt.getClaim("jti");
+            Integer uid = XUtil.intValue(jwt.getClaim("uid"));
+            String type = jwt.getClaim("type");
 
-        // ✔ regenerar JWT con MISMO jti
-        JwtClaimsBuilder builder = Jwt.issuer(ISSUER)
-                .upn(jwt.getSubject())
-                .claim("jti", jti)
-                .claim("uid", uid)
-                .expiresIn(ACCESS_TOKEN_SECONDS);
+            // ✔ validar que sea refresh token
+            if (!"refresh".equals(type)) {
+                throw new RuntimeException("Invalid token type");
+            }
 
-        String newToken = builder.sign();
+            // ✔ validar sesión (opcional redis)
+            sessionService.refresh(jti, ACCESS_TOKEN_SECONDS);
 
-        return newToken;
+            // ✔ generar NUEVO access token (nuevo jti recomendado)
+            String newJti = UUID.randomUUID().toString();
+
+            String newToken = Jwt.issuer(ISSUER)
+                    .upn(jwt.getSubject())
+                    .claim("jti", newJti)
+                    .claim("uid", uid)
+                    .expiresIn(ACCESS_TOKEN_SECONDS)
+                    .sign();
+
+            return newToken;
+
+        } catch (Exception e) {
+            throw new RuntimeException("Invalid refresh token");
+        }
     }
 
     // @Override
