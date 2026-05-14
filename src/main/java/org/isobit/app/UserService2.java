@@ -307,7 +307,8 @@ public class UserService2 {
             // ✔ generar NUEVO access token (nuevo jti recomendado)
             String newJti = UUID.randomUUID().toString();
             String newToken = Jwt.issuer(ISSUER)
-                    .upn("jdoe@quarkus2.io")
+                    .upn(jwt.getClaim("upn"))
+                    .subject(jwt.getSubject())
                     .claim("jti", newJti)
                     .claim("uid", uid)
                     .groups(jwt.getGroups())
