@@ -1,5 +1,5 @@
 quarkus.http.cors=true
-quarkus.http.cors.origins=*
+quarkus.http.cors.origins=http://localhost:5173
 quarkus.http.cors.credentials=true
 quarkus.http.cors.methods=GET,PUT,POST,OPTIONS,DELETE
 mp.jwt.verify.publickey.location=
