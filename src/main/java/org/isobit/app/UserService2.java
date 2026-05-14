@@ -280,8 +280,8 @@ JWTParser parser;
                 .getResultList().stream()
                 .flatMap(permission -> Arrays.stream(permission.split(",")))
                 .collect(Collectors.toList()));
-        sessionService.put(accessJti, "status", "active", ACCESS_TOKEN_SECONDS);
-        sessionService.put(refreshJti, "refresh", "active", REFRESH_TOKEN_SECONDS);
+        //sessionService.put(accessJti, "status", "active", ACCESS_TOKEN_SECONDS);
+        //sessionService.put(refreshJti, "refresh", "active", REFRESH_TOKEN_SECONDS);
         return result;
     }
 
@@ -301,7 +301,7 @@ JWTParser parser;
             }
 
             // ✔ validar sesión (opcional redis)
-            sessionService.refresh(jti, ACCESS_TOKEN_SECONDS);
+            //sessionService.refresh(jti, ACCESS_TOKEN_SECONDS);
 
             // ✔ generar NUEVO access token (nuevo jti recomendado)
             String newJti = UUID.randomUUID().toString();
@@ -310,6 +310,7 @@ JWTParser parser;
                     .upn(jwt.getSubject())
                     .claim("jti", newJti)
                     .claim("uid", uid)
+                    .groups(jwt.getGroups())
                     .expiresIn(ACCESS_TOKEN_SECONDS)
                     .sign();
 
