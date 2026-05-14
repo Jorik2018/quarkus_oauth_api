@@ -108,7 +108,7 @@ public class UserController {
 
 	@POST
 	@Path("/refresh")
-	// CookieParam cannot be resolved to a type
+	@PermitAll
 	public Response refresh(@CookieParam("refreshToken") String refreshToken) {
 
 		if (refreshToken == null) {
