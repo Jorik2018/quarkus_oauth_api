@@ -14,6 +14,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.SecurityContext;
+import jakarta.ws.rs.core.NewCookie.SameSite;
 
 import org.isobit.app.UserService2;
 import org.isobit.app.model.User;
@@ -93,11 +94,12 @@ public class UserController {
 						.path("/")
 						.maxAge(60 * 60 * 24 * 7)
 						.httpOnly(true)
+						.sameSite(SameSite.NONE) // 🔥 CLAVE
 						.secure(false)//for prod must be true
 						.build())
 				.build();
 	}
-	
+
 
 	@POST()
 	@Path("/token")
