@@ -93,7 +93,7 @@ public class UserController {
 						.path("/")
 						.maxAge(60 * 60 * 24 * 7)
 						.httpOnly(true)
-						.secure(true)
+						.secure(false)//for prod must be true
 						.build())
 				.build();
 	}
