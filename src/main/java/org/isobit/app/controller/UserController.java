@@ -110,10 +110,6 @@ public class UserController {
 		return userService.getTokenByCode(code);
 	}
 
-	class RefreshRequest {
-		public Long ttlSeconds;
-	}
-
 	@POST
 	@Path("/refresh")
 	@PermitAll
