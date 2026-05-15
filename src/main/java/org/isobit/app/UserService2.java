@@ -230,13 +230,13 @@ public class UserService2 {
         return user;
     }
 
-    public Map<String, ?> getJWTInfoByUser(User user) {
+    public Map<String, ?> getJWTInfoByUser(User user, Long ttlSeconds) {
         String accessJti = UUID.randomUUID().toString();
         String refreshJti = UUID.randomUUID().toString();
         JwtClaimsBuilder jwtClaimsBuilder = Jwt.issuer(ISSUER)
                 .upn("jdoe@quarkus.io")
                 .groups(new HashSet<>(Arrays.asList("User", "Admin")))
-                .expiresIn(60 * 10) // 11min
+                .expiresIn(ttlSeconds==null?ACCESS_TOKEN_SECONDS:Math.min(ttlSeconds,ACCESS_TOKEN_SECONDS)) // 11min
                 .claim("jti", accessJti)
                 .claim("uid", user.getUid());
 
@@ -253,9 +253,10 @@ public class UserService2 {
         // =========================
         // REFRESH TOKEN (largo)
         // =========================
+
         String refreshToken = Jwt.issuer(ISSUER)
                 .upn(user.getName())
-                .expiresIn(REFRESH_TOKEN_SECONDS) // 7 días
+                .expiresIn(ttlSeconds==null?REFRESH_TOKEN_SECONDS:Math.min(ttlSeconds*4,REFRESH_TOKEN_SECONDS)) // 7 días
                 .claim("jti", refreshJti)
                 .claim("uid", user.getUid())
                 .claim("type", "refresh")
@@ -286,8 +287,7 @@ public class UserService2 {
         return result;
     }
 
-    public String refreshToken(String refreshToken) {
-
+    public String refreshToken(String refreshToken, Long ttlSeconds) {
         try {
             // 🔥 parsear el refresh token correctamente
             JsonWebToken jwt = parser.parse(refreshToken);
@@ -312,7 +312,7 @@ public class UserService2 {
                     .claim("jti", newJti)
                     .claim("uid", uid)
                     .groups(jwt.getGroups())
-                    .expiresIn(ACCESS_TOKEN_SECONDS)
+                    .expiresIn( Math.min(ttlSeconds, ACCESS_TOKEN_SECONDS))
                     .sign();
 
             return newToken;
@@ -380,7 +380,7 @@ public class UserService2 {
             em.createNativeQuery("DELETE FROM oauth2_code WHERE code=:code")
                     .setParameter("code", code).executeUpdate();
 
-            return getJWTInfoByUser(user);
+            return getJWTInfoByUser(user, null);
         } catch (Exception ex) {
 
             HashMap<String, Object> map = new HashMap<String, Object>();

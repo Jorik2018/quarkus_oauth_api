@@ -68,6 +68,7 @@ public class UserController {
 
 		String username = (String) m.get("username");
 		String password = (String) m.get("password");
+		String ttlSeconds = (String) m.get("ttlSeconds");
 
 		if (username == null || username.trim().isEmpty())
 			throw new BadRequestException("Username is Empty!");
@@ -80,7 +81,7 @@ public class UserController {
 		if (user == null)
 			throw new BadRequestException("Usuario no válido!");
 
-		Map<String, ?> result = userService.getJWTInfoByUser(user);
+		Map<String, ?> result = userService.getJWTInfoByUser(user, ttlSeconds!=null?Long.valueOf(ttlSeconds):null);
 
 		// 🔹 extraer refresh token del map
 		String refreshToken = (String) result.get("refreshToken");
@@ -109,18 +110,22 @@ public class UserController {
 		return userService.getTokenByCode(code);
 	}
 
+	class RefreshRequest {
+		public Long ttlSeconds;
+	}
+
 	@POST
 	@Path("/refresh")
 	@PermitAll
-	public Response refresh(@CookieParam("refreshToken") String refreshToken) {
-
+	public Response refresh(@CookieParam("refreshToken") String refreshToken, RefreshRequest request) {
+		
 		if (refreshToken == null) {
 			return Response.status(401)
 					.entity(Map.of("error", "Missing refresh cookie"))
 					.build();
 		}
 
-		String newAccessToken = userService.refreshToken(refreshToken);
+		String newAccessToken = userService.refreshToken(refreshToken, request.ttlSeconds);
 
 		return Response.ok(Map.of(
 				"token", newAccessToken,
