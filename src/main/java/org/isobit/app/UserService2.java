@@ -312,12 +312,13 @@ public class UserService2 {
                     .claim("jti", newJti)
                     .claim("uid", uid)
                     .groups(jwt.getGroups())
-                    .expiresIn( Math.min(ttlSeconds, ACCESS_TOKEN_SECONDS))
+                    .expiresIn((ttlSeconds==null||ttlSeconds<=0)?ACCESS_TOKEN_SECONDS:Math.min(ttlSeconds, ACCESS_TOKEN_SECONDS))
                     .sign();
 
             return newToken;
 
         } catch (Exception e) {
+         
             throw new RuntimeException("Invalid refresh token");
         }
     }
