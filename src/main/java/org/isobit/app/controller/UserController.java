@@ -66,8 +66,16 @@ public class UserController {
 	@PermitAll
 	public Object login(Map<String, Object> m) {
 
-		String username = (String) m.get("username");
-		String password = (String) m.get("password");
+		String username = (String) m.get("name");
+		String password = (String) m.get("pass");
+
+		if (username == null || username.isBlank()) {
+			username = (String) m.get("username");
+		}
+
+		if (password == null || password.isBlank()) {
+			password = (String) m.get("password");
+		}
 		String ttlSeconds = (String) m.get("ttlSeconds");
 
 		if (username == null || username.trim().isEmpty())
