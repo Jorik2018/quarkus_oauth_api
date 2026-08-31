@@ -98,14 +98,14 @@ public class UserController {
 		result.remove("refreshToken");
 		// NewCookie cannot be resolved to a type
 		return Response.ok(result)
-				.cookie(new NewCookie.Builder("refreshToken")
+				/* .cookie(new NewCookie.Builder("refreshToken")
 						.value(refreshToken)
 						.path("/")
 						.maxAge(60 * 60 * 24 * 7)
 						.httpOnly(true)
 						.sameSite(SameSite.LAX) // 🔥 CLAVE
 						.secure(false)//for prod must be true
-						.build())
+						.build())*/
 				.build();
 	}
 
