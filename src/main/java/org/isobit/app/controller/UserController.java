@@ -117,24 +117,41 @@ public class UserController {
 	public Object getTokenByCode(String code) {
 		return userService.getTokenByCode(code);
 	}
+	
+@POST
+@Path("/refresh")
+@PermitAll
+@Produces(MediaType.APPLICATION_JSON)
+public Response refresh(
+        @CookieParam("refreshToken") String refreshToken,
+        @QueryParam("ttlSeconds") Long ttlSeconds) {
 
-	@POST
-	@Path("/refresh")
-	@PermitAll
-	public Response refresh(@CookieParam("refreshToken") String refreshToken, RefreshRequest request) {
-		
-		if (refreshToken == null) {
-			return Response.status(401)
-					.entity(Map.of("error", "Missing refresh cookie"))
-					.build();
-		}
+    if (refreshToken == null || refreshToken.isBlank()) {
+        return Response.status(Response.Status.UNAUTHORIZED)
+                .entity(Map.of("error", "Missing refresh cookie"))
+                .build();
+    }
 
-		String newAccessToken = userService.refreshToken(refreshToken, request.ttlSeconds);
+    try {
+        String newAccessToken =
+                userService.refreshToken(refreshToken, ttlSeconds);
 
-		return Response.ok(Map.of(
-				"token", newAccessToken,
-				"type", "Bearer")).build();
-	}
+        return Response.ok(Map.of(
+                "token", newAccessToken,
+                "type", "Bearer"
+        )).build();
+
+    } catch (Exception e) {
+        e.printStackTrace();
+
+        return Response.status(Response.Status.UNAUTHORIZED)
+                .entity(Map.of(
+                        "error",
+                        "Invalid or expired refresh token"
+                ))
+                .build();
+    }
+}
 
 	@POST()
 	@Path("change-password")
