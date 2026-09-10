@@ -26,7 +26,7 @@ import jakarta.ws.rs.HeaderParam;
 import jakarta.ws.rs.CookieParam;
 import jakarta.ws.rs.core.NewCookie;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
-
+import jakarta.ws.rs.QueryParam;
 import jakarta.inject.Inject;
 
 import org.isobit.app.client.CaptchaClient;
