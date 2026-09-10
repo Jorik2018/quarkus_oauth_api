@@ -9,7 +9,7 @@ mp.jwt.verify.issuer=https://example.com/issuer
 smallrye.jwt.expiration.grace=360
 quarkus-smallrye.jwt.sign.key-location=
 smallrye.jwt.sign.key-location=
-
+quarkus.rest-client."captcha-api".url=http://localhost
 quarkus.http.port=5055
 quarkus.application.name=auth
 quarkus.eureka.region=default
