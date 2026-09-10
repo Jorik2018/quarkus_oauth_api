@@ -25,6 +25,11 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.HeaderParam;
 import jakarta.ws.rs.CookieParam;
 import jakarta.ws.rs.core.NewCookie;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
+
+import jakarta.inject.Inject;
+
+import org.isobit.app.client.CaptchaClient;
 
 @Path("")
 @RequestScoped
@@ -37,6 +42,10 @@ public class UserController {
 
 	@Inject
 	JsonWebToken jwt;
+
+	@Inject
+	@RestClient
+	CaptchaClient captchaClient;
 
 	@POST()
 	@Path("d")
@@ -84,12 +93,21 @@ public class UserController {
 		if (password == null || password.trim().isEmpty())
 			throw new BadRequestException("Password is Empty!");
 
+		String captchaId = (String) m.get("captchaId");
+		String captcha = (String) m.get("captcha");
+		if (captchaId == null || captchaId.isBlank())
+			throw new BadRequestException("CaptchaId is Empty!");
+
+		if (captcha == null || captcha.isBlank())
+			throw new BadRequestException("Captcha is Empty!");
+
 		User user = userService.login(username, password);
 
 		if (user == null)
 			throw new BadRequestException("Usuario no válido!");
 
-		Map<String, ?> result = userService.getJWTInfoByUser(user, ttlSeconds!=null?Long.valueOf(ttlSeconds):null);
+		Map<String, ?> result = userService.getJWTInfoByUser(user,
+				ttlSeconds != null ? Long.valueOf(ttlSeconds) : null);
 
 		// 🔹 extraer refresh token del map
 		String refreshToken = (String) result.get("refreshToken");
@@ -104,11 +122,10 @@ public class UserController {
 						.maxAge(60 * 60 * 24 * 7)
 						.httpOnly(true)
 						.sameSite(SameSite.LAX) // 🔥 CLAVE
-						.secure(false)//for prod must be true
+						.secure(false)// for prod must be true
 						.build())
 				.build();
 	}
-
 
 	@POST()
 	@Path("/token")
@@ -117,41 +134,38 @@ public class UserController {
 	public Object getTokenByCode(String code) {
 		return userService.getTokenByCode(code);
 	}
-	
-@POST
-@Path("/refresh")
-@PermitAll
-@Produces(MediaType.APPLICATION_JSON)
-public Response refresh(
-        @CookieParam("refreshToken") String refreshToken,
-        @QueryParam("ttlSeconds") Long ttlSeconds) {
 
-    if (refreshToken == null || refreshToken.isBlank()) {
-        return Response.status(Response.Status.UNAUTHORIZED)
-                .entity(Map.of("error", "Missing refresh cookie"))
-                .build();
-    }
+	@POST
+	@Path("/refresh")
+	@PermitAll
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response refresh(
+			@CookieParam("refreshToken") String refreshToken,
+			@QueryParam("ttlSeconds") Long ttlSeconds) {
 
-    try {
-        String newAccessToken =
-                userService.refreshToken(refreshToken, ttlSeconds);
+		if (refreshToken == null || refreshToken.isBlank()) {
+			return Response.status(Response.Status.UNAUTHORIZED)
+					.entity(Map.of("error", "Missing refresh cookie"))
+					.build();
+		}
 
-        return Response.ok(Map.of(
-                "token", newAccessToken,
-                "type", "Bearer"
-        )).build();
+		try {
+			String newAccessToken = userService.refreshToken(refreshToken, ttlSeconds);
 
-    } catch (Exception e) {
-        e.printStackTrace();
+			return Response.ok(Map.of(
+					"token", newAccessToken,
+					"type", "Bearer")).build();
 
-        return Response.status(Response.Status.UNAUTHORIZED)
-                .entity(Map.of(
-                        "error",
-                        "Invalid or expired refresh token"
-                ))
-                .build();
-    }
-}
+		} catch (Exception e) {
+			e.printStackTrace();
+
+			return Response.status(Response.Status.UNAUTHORIZED)
+					.entity(Map.of(
+							"error",
+							"Invalid or expired refresh token"))
+					.build();
+		}
+	}
 
 	@POST()
 	@Path("change-password")
