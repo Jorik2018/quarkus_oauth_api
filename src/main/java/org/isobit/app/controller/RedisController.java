@@ -21,7 +21,7 @@ public class RedisController {
     private final ValueCommands<String, String> values;
 
     @Inject
-    public RedisResource(RedisDataSource redisDataSource) {
+    public RedisController(RedisDataSource redisDataSource) {
         this.keys = redisDataSource.key();
         this.values = redisDataSource.value(String.class);
     }
