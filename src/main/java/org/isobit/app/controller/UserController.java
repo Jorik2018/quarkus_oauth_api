@@ -136,8 +136,17 @@ public class UserController {
 	}
 
 	@POST
-	@Path("/refresh")
 	@Path("/validate")
+	@PermitAll
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response validate(
+			@CookieParam("refreshToken") String refreshToken,
+			@QueryParam("ttlSeconds") Long ttlSeconds) {
+		refresh(refreshToken, ttlSeconds);
+	}
+
+	@POST
+	@Path("/refresh")
 	@PermitAll
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response refresh(
