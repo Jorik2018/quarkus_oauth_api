@@ -142,7 +142,7 @@ public class UserController {
 	public Response validate(
 			@CookieParam("refreshToken") String refreshToken,
 			@QueryParam("ttlSeconds") Long ttlSeconds) {
-		refresh(refreshToken, ttlSeconds);
+		return refresh(refreshToken, ttlSeconds);
 	}
 
 	@POST
