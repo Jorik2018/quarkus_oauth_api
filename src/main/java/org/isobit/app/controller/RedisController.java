@@ -15,7 +15,7 @@ import java.util.Map;
 @Path("/redis")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public class RedisResource {
+public class RedisController {
 
     private final KeyCommands<String> keys;
     private final ValueCommands<String, String> values;
