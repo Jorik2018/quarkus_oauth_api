@@ -137,6 +137,7 @@ public class UserController {
 
 	@POST
 	@Path("/refresh")
+	@Path("/validate")
 	@PermitAll
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response refresh(

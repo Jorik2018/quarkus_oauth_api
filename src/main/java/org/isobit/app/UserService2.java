@@ -47,7 +47,7 @@ public class UserService2 {
 
     private long REFRESH_TOKEN_SECONDS = 60 * 60 * 24 * 7; // week
 
-    private long ACCESS_TOKEN_SECONDS = 3600;
+    private long ACCESS_TOKEN_SECONDS = 3600;//60*60
 
     @Inject
     SessionService sessionService;
