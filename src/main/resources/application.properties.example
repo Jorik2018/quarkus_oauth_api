@@ -23,5 +23,5 @@ quarkus.datasource.jdbc.url =
 quarkus.hibernate-orm.packages=org.isobit.app.model,org.isobit.directory.model
 quarkus.hibernate-orm.datasource=<default> 
 
-quarkus.redis.hosts=localhost:6379
+quarkus.redis.hosts=redis://localhost:6379
 session.redis.enabled=true
