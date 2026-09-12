@@ -25,7 +25,6 @@ dependencies {
     implementation 'io.quarkus:quarkus-redis-client'
     implementation 'org.jboss.resteasy:resteasy-multipart-provider'
   
-  
     implementation 'io.quarkus:quarkus-rest-client-jackson'
     
 	//implementation 'com.github.fmcejudo:quarkus-eureka-deployment:0.0.10'
