@@ -1,6 +1,7 @@
 package org.isobit.app.controller;
 
 import jakarta.annotation.security.PermitAll;
+import io.quarkus.security.Authenticated;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
@@ -63,13 +64,6 @@ public class UserController {
 	public UserController(RedisDataSource redisDataSource) {
 		this.redisKeys = redisDataSource.key();
 		this.redisValues = redisDataSource.value(String.class);
-	}
-
-	@POST()
-	@Path("d")
-	@PermitAll
-	public String login() {
-		return "POST";
 	}
 
 	@POST()
@@ -199,7 +193,7 @@ public class UserController {
 
 	@POST
 	@Path("/validate")
-	@PermitAll
+	@Authenticated
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response validate(
 			@CookieParam("refreshToken") String refreshToken,
