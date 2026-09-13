@@ -25,6 +25,13 @@ import jakarta.ws.rs.PathParam;
 @Produces(MediaType.APPLICATION_JSON)
 public class DatabaseController {
 
+    public record TableInfo(
+            String name,
+            String catalog,
+            String schema,
+            String type) {
+    }
+
     @Inject
     DataSource dataSource;
 
