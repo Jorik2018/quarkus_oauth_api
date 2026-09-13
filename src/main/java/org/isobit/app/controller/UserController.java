@@ -28,8 +28,15 @@ import jakarta.ws.rs.core.NewCookie;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import jakarta.ws.rs.QueryParam;
 import jakarta.inject.Inject;
-
+import io.quarkus.redis.datasource.RedisDataSource;
+import io.quarkus.redis.datasource.keys.KeyCommands;
+import io.quarkus.redis.datasource.value.ValueCommands;
+import org.jboss.logging.Logger;
 import org.isobit.app.client.CaptchaClient;
+import io.quarkus.redis.datasource.RedisDataSource;
+import io.quarkus.redis.datasource.keys.KeyCommands;
+import io.quarkus.redis.datasource.value.ValueCommands;
+import org.jboss.logging.Logger;
 
 @Path("")
 @RequestScoped
@@ -46,6 +53,17 @@ public class UserController {
 	@Inject
 	@RestClient
 	CaptchaClient captchaClient;
+
+	private static final Logger LOG = Logger.getLogger(UserController.class);
+
+	private final KeyCommands<String> redisKeys;
+	private final ValueCommands<String, String> redisValues;
+
+	@Inject
+	public UserController(RedisDataSource redisDataSource) {
+		this.redisKeys = redisDataSource.key();
+		this.redisValues = redisDataSource.value(String.class);
+	}
 
 	@POST()
 	@Path("d")
@@ -152,8 +170,8 @@ public class UserController {
 						"Captcha no válido!");
 			}
 
-			if(!key.endsWith("+test")){
-			redisKeys.del(key);
+			if (!key.endsWith("+test")) {
+				redisKeys.del(key);
 			}
 		} catch (BadRequestException e) {
 
