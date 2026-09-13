@@ -43,6 +43,7 @@ import org.jboss.logging.Logger;
 @RequestScoped
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
+@Authenticated
 public class UserController {
 
 	@Inject
@@ -193,7 +194,6 @@ public class UserController {
 
 	@POST
 	@Path("/validate")
-	@Authenticated
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response validate(
 			@CookieParam("refreshToken") String refreshToken,
@@ -203,7 +203,6 @@ public class UserController {
 
 	@POST
 	@Path("/refresh")
-	@PermitAll
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response refresh(
 			@CookieParam("refreshToken") String refreshToken,
@@ -236,7 +235,6 @@ public class UserController {
 	@POST()
 	@Path("change-password")
 	// @RolesAllowed({ "User", "Admin" })
-	@PermitAll
 	public Object changePassword(Map<Object, String> map) {
 		/* User user = userService.getCurrentUser(); */
 		System.out.println(map);
@@ -269,7 +267,6 @@ public class UserController {
 
 	@GET()
 	@Path("info")
-	@PermitAll
 	public Object checkToken(@Context SecurityContext ctx) {
 		Integer uid = Integer.parseInt(jwt.getClaim("uid").toString());
 		HashMap<String, Object> result = new HashMap<String, Object>();
