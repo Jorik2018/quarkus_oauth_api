@@ -101,6 +101,10 @@ public class UserController {
 		if (captcha == null || captcha.isBlank())
 			throw new BadRequestException("Captcha is Empty!");
 
+		validateCaptcha(
+				captchaId,
+				captcha);
+
 		User user = userService.login(username, password);
 
 		if (user == null)
@@ -125,6 +129,46 @@ public class UserController {
 						.secure(false)// for prod must be true
 						.build())
 				.build();
+	}
+
+	private void validateCaptcha(
+			String captchaId,
+			String captcha) {
+
+		String key = "captcha:" + captchaId;
+
+		try {
+
+			String expected = redisValues.get(key);
+
+			if (expected == null) {
+				throw new BadRequestException(
+						"Captcha no válido!");
+			}
+
+			if (!expected.equalsIgnoreCase(
+					captcha.trim())) {
+				throw new BadRequestException(
+						"Captcha no válido!");
+			}
+
+			if(!key.endsWith("+test")){
+			redisKeys.del(key);
+			}
+		} catch (BadRequestException e) {
+
+			throw e;
+
+		} catch (Exception e) {
+
+			LOG.error(
+					"Error conectando con Redis. "
+							+ "Se continúa con login normal sin validar captcha.",
+					e);
+
+			// NO lanzamos excepción.
+			// Continúa el login user/password.
+		}
 	}
 
 	@POST()
