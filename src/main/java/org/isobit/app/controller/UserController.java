@@ -77,7 +77,6 @@ public class UserController {
 
 	@POST()
 	@Path("perms")
-	@PermitAll
 	public Object perms() {
 		Integer uid = Integer.parseInt(jwt.getClaim("uid").toString());
 		return userService.perms(uid);
@@ -204,6 +203,7 @@ public class UserController {
 	@POST
 	@Path("/refresh")
 	@Produces(MediaType.APPLICATION_JSON)
+	@PermitAll
 	public Response refresh(
 			@CookieParam("refreshToken") String refreshToken,
 			@QueryParam("ttlSeconds") Long ttlSeconds) {
