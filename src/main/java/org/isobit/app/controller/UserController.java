@@ -204,7 +204,6 @@ public class UserController {
 	@POST
 	@Path("/refresh")
 	@Produces(MediaType.APPLICATION_JSON)
-	@Authenticated
 	public Response refresh(
 			@CookieParam("refreshToken") String refreshToken,
 			@QueryParam("ttlSeconds") Long ttlSeconds) {
