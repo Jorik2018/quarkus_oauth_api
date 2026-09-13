@@ -7,6 +7,7 @@ quarkus-smallrye.jwt.sign.key-location=
 smallrye.jwt.sign.key.location=
 mp.jwt.verify.issuer=https://example.com/issuer
 smallrye.jwt.expiration.grace=360
+quarkus.security.jaxrs.deny-unannotated-endpoints=true
 quarkus-smallrye.jwt.sign.key-location=
 smallrye.jwt.sign.key-location=
 quarkus.rest-client."captcha-api".url=http://localhost
