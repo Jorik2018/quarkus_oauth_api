@@ -298,4 +298,23 @@ public class UserController {
 	private boolean hasJwt() {
 		return jwt.getClaimNames() != null;
 	}
+
+	@GET
+	@Path("/logout")
+	@PermitAll
+	public Response logout() {
+
+		NewCookie deleteRefreshToken = new NewCookie.Builder("refreshToken")
+				.value("")
+				.path("/")
+				.maxAge(0)
+				.httpOnly(true)
+				.sameSite(SameSite.LAX)
+				.secure(false) // true en producción
+				.build();
+
+		return Response.ok(Map.of("logout", true))
+				.cookie(deleteRefreshToken)
+				.build();
+	}
 }
