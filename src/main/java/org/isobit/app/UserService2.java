@@ -47,7 +47,7 @@ public class UserService2 {
 
     private long REFRESH_TOKEN_SECONDS = 60 * 60 * 24 * 7; // week
 
-    private long ACCESS_TOKEN_SECONDS = 3600;//60*60
+    private long ACCESS_TOKEN_SECONDS = 3600;// 60*60
 
     @Inject
     SessionService sessionService;
@@ -230,13 +230,52 @@ public class UserService2 {
         return user;
     }
 
+    private Map<String, Object> getUserInfo(User user) {
+
+        Map<String, Object> info = new HashMap<>();
+
+        info.put("user", user.getName());
+        info.put("user_nicename", user.getName());
+
+        if (user.getDirectoryId() != null) {
+            info.put("directory", user.getDirectoryId().toString());
+
+            People people = em.find(People.class, user.getDirectoryId());
+
+            if (people != null) {
+                info.put("fullName", people.getFullName());
+            }
+        }
+
+        List<Integer> roles = em.createQuery(
+                "SELECT ur.role.rid FROM UserRole ur WHERE ur.PK.uid=:uid",
+                Integer.class)
+                .setParameter("uid", user.getUid())
+                .getResultList();
+
+        roles.add(0);
+
+        List<String> perms = em.createQuery(
+                "SELECT p.perm FROM Permission p WHERE p.role.rid IN :rid",
+                String.class)
+                .setParameter("rid", roles)
+                .getResultList()
+                .stream()
+                .flatMap(permission -> Arrays.stream(permission.split(",")))
+                .collect(Collectors.toList());
+
+        info.put("perms", perms);
+
+        return info;
+    }
+
     public Map<String, ?> getJWTInfoByUser(User user, Long ttlSeconds) {
         String accessJti = UUID.randomUUID().toString();
         String refreshJti = UUID.randomUUID().toString();
         JwtClaimsBuilder jwtClaimsBuilder = Jwt.issuer(ISSUER)
                 .upn("jdoe@quarkus.io")
                 .groups(new HashSet<>(Arrays.asList("User", "Admin")))
-                .expiresIn(ttlSeconds==null?ACCESS_TOKEN_SECONDS:Math.min(ttlSeconds,ACCESS_TOKEN_SECONDS)) // 11min
+                .expiresIn(ttlSeconds == null ? ACCESS_TOKEN_SECONDS : Math.min(ttlSeconds, ACCESS_TOKEN_SECONDS)) // 11min
                 .claim("jti", accessJti)
                 .claim("uid", user.getUid());
 
@@ -256,7 +295,8 @@ public class UserService2 {
 
         String refreshToken = Jwt.issuer(ISSUER)
                 .upn(user.getName())
-                .expiresIn(ttlSeconds==null?REFRESH_TOKEN_SECONDS:Math.min(ttlSeconds*4,REFRESH_TOKEN_SECONDS)) // 7 días
+                .expiresIn(ttlSeconds == null ? REFRESH_TOKEN_SECONDS : Math.min(ttlSeconds * 4, REFRESH_TOKEN_SECONDS)) // 7
+                                                                                                                         // días
                 .claim("jti", refreshJti)
                 .claim("uid", user.getUid())
                 .claim("type", "refresh")
@@ -282,44 +322,59 @@ public class UserService2 {
                 .getResultList().stream()
                 .flatMap(permission -> Arrays.stream(permission.split(",")))
                 .collect(Collectors.toList()));
-        //sessionService.put(accessJti, "status", "active", ACCESS_TOKEN_SECONDS);
-        //sessionService.put(refreshJti, "refresh", "active", REFRESH_TOKEN_SECONDS);
+        // sessionService.put(accessJti, "status", "active", ACCESS_TOKEN_SECONDS);
+        // sessionService.put(refreshJti, "refresh", "active", REFRESH_TOKEN_SECONDS);
         return result;
     }
 
-    public String refreshToken(String refreshToken, Long ttlSeconds) {
+    public Map<String, Object> refreshToken(String refreshToken, Long ttlSeconds) {
         try {
-            // 🔥 parsear el refresh token correctamente
             JsonWebToken jwt = parser.parse(refreshToken);
 
-            String jti = jwt.getClaim("jti");
             Integer uid = XUtil.intValue(jwt.getClaim("uid"));
             String type = jwt.getClaim("type");
 
-            // ✔ validar que sea refresh token
             if (!"refresh".equals(type)) {
                 throw new RuntimeException("Invalid token type");
             }
 
-            // ✔ validar sesión (opcional redis)
-            //sessionService.refresh(jti, ACCESS_TOKEN_SECONDS);
+            User user = em.find(User.class, uid);
 
-            // ✔ generar NUEVO access token (nuevo jti recomendado)
+            if (user == null || user.getStatus() == 0) {
+                throw new RuntimeException("Invalid user");
+            }
+
             String newJti = UUID.randomUUID().toString();
-            String newToken = Jwt.issuer(ISSUER)
-                    .upn(jwt.getClaim("upn"))
-                    .subject(jwt.getSubject())
+
+            JwtClaimsBuilder builder = Jwt.issuer(ISSUER)
+                    .upn(user.getName())
                     .claim("jti", newJti)
                     .claim("uid", uid)
-                    .groups(jwt.getGroups())
-                    .expiresIn((ttlSeconds==null||ttlSeconds<=0)?ACCESS_TOKEN_SECONDS:Math.min(ttlSeconds, ACCESS_TOKEN_SECONDS))
-                    .sign();
+                    .claim("user", user.getName())
+                    .expiresIn(
+                            (ttlSeconds == null || ttlSeconds <= 0)
+                                    ? ACCESS_TOKEN_SECONDS
+                                    : Math.min(ttlSeconds, ACCESS_TOKEN_SECONDS));
 
-            return newToken;
+            if (user.getDirectoryId() != null) {
+                People people = em.find(People.class, user.getDirectoryId());
+
+                if (people != null) {
+                    builder.claim("fullName", people.getFullName());
+                }
+
+                builder.claim("directory", user.getDirectoryId());
+            }
+
+            String newToken = builder.sign();
+
+            Map<String, Object> result = getUserInfo(user);
+            result.put("token", newToken);
+
+            return result;
 
         } catch (Exception e) {
-         
-            throw new RuntimeException("Invalid refresh token");
+            throw new RuntimeException("Invalid refresh token", e);
         }
     }
 

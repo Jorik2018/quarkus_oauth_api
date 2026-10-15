@@ -28,16 +28,11 @@ import jakarta.ws.rs.CookieParam;
 import jakarta.ws.rs.core.NewCookie;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import jakarta.ws.rs.QueryParam;
-import jakarta.inject.Inject;
 import io.quarkus.redis.datasource.RedisDataSource;
 import io.quarkus.redis.datasource.keys.KeyCommands;
 import io.quarkus.redis.datasource.value.ValueCommands;
 import org.jboss.logging.Logger;
 import org.isobit.app.client.CaptchaClient;
-import io.quarkus.redis.datasource.RedisDataSource;
-import io.quarkus.redis.datasource.keys.KeyCommands;
-import io.quarkus.redis.datasource.value.ValueCommands;
-import org.jboss.logging.Logger;
 
 @Path("")
 @RequestScoped
@@ -80,67 +75,6 @@ public class UserController {
 	public Object perms() {
 		Integer uid = Integer.parseInt(jwt.getClaim("uid").toString());
 		return userService.perms(uid);
-	}
-
-	@POST
-	@Path("")
-	@PermitAll
-	public Object login(Map<String, Object> m) {
-
-		String username = (String) m.get("name");
-		String password = (String) m.get("pass");
-
-		if (username == null || username.isBlank()) {
-			username = (String) m.get("username");
-		}
-
-		if (password == null || password.isBlank()) {
-			password = (String) m.get("password");
-		}
-		String ttlSeconds = (String) m.get("ttlSeconds");
-
-		if (username == null || username.trim().isEmpty())
-			throw new BadRequestException("Username is Empty!");
-
-		if (password == null || password.trim().isEmpty())
-			throw new BadRequestException("Password is Empty!");
-
-		String captchaId = (String) m.get("captchaId");
-		String captcha = (String) m.get("captcha");
-		if (captchaId == null || captchaId.isBlank())
-			throw new BadRequestException("CaptchaId is Empty!");
-
-		if (captcha == null || captcha.isBlank())
-			throw new BadRequestException("Captcha is Empty!");
-
-		validateCaptcha(
-				captchaId,
-				captcha);
-
-		User user = userService.login(username, password);
-
-		if (user == null)
-			throw new BadRequestException("Usuario no válido!");
-
-		Map<String, ?> result = userService.getJWTInfoByUser(user,
-				ttlSeconds != null ? Long.valueOf(ttlSeconds) : null);
-
-		// 🔹 extraer refresh token del map
-		String refreshToken = (String) result.get("refreshToken");
-
-		// 🔹 removerlo del body (opcional pero recomendado)
-		result.remove("refreshToken");
-		// NewCookie cannot be resolved to a type
-		return Response.ok(result)
-				.cookie(new NewCookie.Builder("refreshToken")
-						.value(refreshToken)
-						.path("/")
-						.maxAge(60 * 60 * 24 * 7)
-						.httpOnly(true)
-						.sameSite(SameSite.LAX) // 🔥 CLAVE
-						.secure(false)// for prod must be true
-						.build())
-				.build();
 	}
 
 	private void validateCaptcha(
@@ -215,21 +149,80 @@ public class UserController {
 		}
 
 		try {
-			String newAccessToken = userService.refreshToken(refreshToken, ttlSeconds);
+			Map<String, Object> result = userService.refreshToken(refreshToken, ttlSeconds);
 
-			return Response.ok(Map.of(
-					"token", newAccessToken,
-					"type", "Bearer")).build();
+			result.put("type", "Bearer");
+
+			return Response.ok(result).build();
 
 		} catch (Exception e) {
-			e.printStackTrace();
-
 			return Response.status(Response.Status.UNAUTHORIZED)
 					.entity(Map.of(
 							"error",
 							"Invalid or expired refresh token"))
 					.build();
 		}
+	}
+
+	@POST
+	@Path("")
+	@PermitAll
+	public Object login(Map<String, Object> m) {
+
+		String username = (String) m.get("name");
+		String password = (String) m.get("pass");
+
+		if (username == null || username.isBlank()) {
+			username = (String) m.get("username");
+		}
+
+		if (password == null || password.isBlank()) {
+			password = (String) m.get("password");
+		}
+		String ttlSeconds = (String) m.get("ttlSeconds");
+
+		if (username == null || username.trim().isEmpty())
+			throw new BadRequestException("Username is Empty!");
+
+		if (password == null || password.trim().isEmpty())
+			throw new BadRequestException("Password is Empty!");
+
+		String captchaId = (String) m.get("captchaId");
+		String captcha = (String) m.get("captcha");
+		if (captchaId == null || captchaId.isBlank())
+			throw new BadRequestException("CaptchaId is Empty!");
+
+		if (captcha == null || captcha.isBlank())
+			throw new BadRequestException("Captcha is Empty!");
+
+		validateCaptcha(
+				captchaId,
+				captcha);
+
+		User user = userService.login(username, password);
+
+		if (user == null)
+			throw new BadRequestException("Usuario no válido!");
+
+		Map<String, ?> result = userService.getJWTInfoByUser(user,
+				ttlSeconds != null ? Long.valueOf(ttlSeconds) : null);
+
+		// 🔹 extraer refresh token del map
+		String refreshToken = (String) result.get("refreshToken");
+
+		// 🔹 removerlo del body (opcional pero recomendado)
+		result.remove("refreshToken");
+		// NewCookie cannot be resolved to a type
+		return Response.ok(result)
+				.cookie(new NewCookie.Builder("refreshToken")
+						.value(refreshToken)
+						.path("/")
+						.maxAge(60 * 60 * 24 * 7)
+						.httpOnly(true)
+						.sameSite(SameSite.LAX) // 🔥 CLAVE
+						.secure(false)// for prod must be true
+						.build())
+				.build();
 	}
 
 	@POST()
